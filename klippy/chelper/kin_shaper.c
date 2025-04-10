@@ -156,6 +156,16 @@ shaper_xy_calc_position(struct stepper_kinematics *sk, struct move *m
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
+// A callback that forwards post_cb call to the original kinematics
+static void
+shaper_commanded_pos_post_fixup(struct stepper_kinematics *sk)
+{
+    struct input_shaper *is = container_of(sk, struct input_shaper, sk);
+    is->orig_sk->commanded_pos = sk->commanded_pos;
+    is->orig_sk->post_cb(is->orig_sk);
+    sk->commanded_pos = is->orig_sk->commanded_pos;
+}
+
 int __visible
 input_shaper_set_sk(struct stepper_kinematics *sk
                     , struct stepper_kinematics *orig_sk)
@@ -174,6 +184,9 @@ input_shaper_set_sk(struct stepper_kinematics *sk
     is->sk.commanded_pos = orig_sk->commanded_pos;
     is->sk.last_flush_time = orig_sk->last_flush_time;
     is->sk.last_move_time = orig_sk->last_move_time;
+    if (orig_sk->post_cb) {
+        is->sk.post_cb = shaper_commanded_pos_post_fixup;
+    }
     return 0;
 }
 
@@ -204,11 +217,11 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sp = axis == 'x' ? &is->sx : &is->sy;
     int status = 0;
-    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y))
+    // Ignore input shaper update if the axis is not active
+    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y)) {
         status = init_shaper(n, a, t, sp);
-    else
-        sp->num_pulses = 0;
-    shaper_note_generation_time(is);
+        shaper_note_generation_time(is);
+    }
     return status;
 }
 
