@@ -199,3 +199,10 @@ def pseudo_inverse(m):
     mt = mat_transp(m)
     mtm = mat_mat_mul(mt, m)
     return gaussian_solve(mtm, mt)
+
+# Find least squares solution for a set of linear equations
+def solve_linear_equations(eqs, ans):
+    eqst = mat_transp(eqs)
+    eqst_eqs = mat_mat_mul(eqst, eqs)
+    eqst_ans = mat_mat_mul(eqst, ans)
+    return gaussian_solve(eqst_eqs, eqst_ans)

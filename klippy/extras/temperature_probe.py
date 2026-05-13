@@ -53,10 +53,7 @@ class Polynomial2d:
         for x, y in coords:
             eqs.append([1., x, x*x])
             ans.append([y])
-        eqst = mathutil.mat_transp(eqs)
-        eqst_eqs = mathutil.mat_mat_mul(eqst, eqs)
-        eqst_ans = mathutil.mat_mat_mul(eqst, ans)
-        res = mathutil.gaussian_solve(eqst_eqs, eqst_ans)
+        res = mathutil.solve_linear_equations(eqs, ans)
         return cls(res[0][0], res[1][0], res[2][0])
 
 class TemperatureProbe:
